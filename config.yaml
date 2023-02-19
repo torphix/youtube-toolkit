@@ -1,16 +1,16 @@
+dataset_name: lex
+download_path: ./data
+
 scraper:
   video_links:  # enter video links here
-    - https://www.youtube.com/watch?v=SVudj35UWmA
-    - https://www.youtube.com/watch?v=Kz0iJGLAYnI
-    - https://www.youtube.com/watch?v=3O7NlVhcKCQ
-    - https://www.youtube.com/watch?v=73MEHUJrjL8
+    - https://www.youtube.com/watch?v=-DVyjdw4t9I
+    - https://www.youtube.com/watch?v=cdiD-9MMpb0
   channel_link: # use this to scrape all videos on a channel
   n_workers: 4 # number of threads to spawn to scrape videos
   title_keyword_filter: [] # if title contains any of these keywords will not download
-  dataset_name: lex
-  download_path: ./data
   title_char_stripper: '.,#-_=+!"£$%^&*`@:;/?~' # string of characters to remove from title
 
 audio_processing:
-  n_speakers:
-  model_type: # whisper model type to use
+  min_audio_len: 750 # in ms
+  n_speakers: 2
+  model_type: medium.en # whisper model type to use

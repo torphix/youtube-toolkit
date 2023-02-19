@@ -1,15 +1,17 @@
+import os
 import pytube
 from tqdm import tqdm
 import concurrent.futures
 from .utils import open_config
-
+from moviepy.editor import AudioFileClip
 
 class Scraper:
     def __init__(self, scrape_channel: bool = False):
-        self.config = open_config()["scraper"]
+        self.config = open_config()
         self.download_path = (
             f"{self.config['download_path']}/{self.config['dataset_name']}"
         )
+        self.config = self.config["scraper"]
         if scrape_channel:
             assert (
                 self.config["channel_link"] is not None
@@ -38,21 +40,37 @@ class Scraper:
                     pbar.update(1)
 
     def download_audio(self, video_link: str):
-        video = pytube.YouTube(video_link)
-        # Filter out videos with keywords in title
-        for keyword in self.config["title_keyword_filter"]:
-            if keyword in video.title:
-                return
-        # Download audio
-        # strip characters that are not allowed in filenames
-        filename = (
-            "".join([c for c in video.title if c.isalpha() or c.isdigit() or c == " "])
-            .rstrip()
-            .lower()
-            .replace(" ", "_")
-            .replace("__", "_") + '.mp3'
-        )
-
-        video.streams.filter(only_audio=True).first().download(
-            self.download_path, filename=filename
-        )
+        try:
+            video = pytube.YouTube(video_link)
+            # Filter out videos with keywords in title
+            for keyword in self.config["title_keyword_filter"]:
+                if keyword in video.title:
+                    return
+            # Download audio
+            filename = (
+                "".join(
+                    [c for c in video.title if c.isalpha() or c.isdigit() or c == " "]
+                )
+                .rstrip()
+                .lower()
+                .replace(" ", "_")
+                .replace("__", "_")
+            )
+            video.streams.filter(only_audio=True).first().download(
+                self.download_path, filename=filename + ".mp4"
+            )
+            video = AudioFileClip(self.download_path + "/" + filename + ".mp4")
+            # strip characters that are not allowed in filenames
+            video.write_audiofile(self.download_path + "/" + filename + ".wav")
+            video.close()
+            os.remove(self.download_path + "/" + filename + ".mp4")
+      
+            
+        except Exception as e:
+            print(f"Error downloading {video_link}: {e}")
+            if not os.path.exists(f"{self.download_path}/error.log"):
+                with open(f"{self.download_path}/error.log", "w") as f:
+                    f.write(f"{video_link}: {e}")
+            else:
+                with open(f"{self.download_path}/error.log", "a") as f:
+                    f.write(f"\n{video_link}: {e}")
